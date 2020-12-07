@@ -11,7 +11,7 @@ from slack_sdk import WebClient
 # CONFIG - CHANGE ACCORDINGLY
 ###
 db = "validator_data.db"
-my_validators = "18843"  # List your validator by index. Comma separated but NO SPACE.
+my_validators = "9026,35752"  # List your validator by index. Comma separated but NO SPACE.
 
 conn = sqlite3.connect(db, detect_types=sqlite3.PARSE_DECLTYPES)
 c = conn.cursor()
