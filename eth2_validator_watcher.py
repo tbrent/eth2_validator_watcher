@@ -1,4 +1,5 @@
 import os
+import cbpro
 import requests
 import json
 import time
@@ -11,7 +12,7 @@ from slack_sdk import WebClient
 # CONFIG - CHANGE ACCORDINGLY
 ###
 db = "validator_data.db"
-my_validators = "9026,35752"  # List your validator by index. Comma separated but NO SPACE.
+my_validators = "9026"  # List your validator by index. Comma separated but NO SPACE.
 
 conn = sqlite3.connect(db, detect_types=sqlite3.PARSE_DECLTYPES)
 c = conn.cursor()
@@ -126,7 +127,7 @@ def send_message(text):
 
 def check_balance_and_record(data):
     """Gets the total balance of your validators and compares it with the balance from the last query.
-    Stores the individual balance in the db. Notifies if the balance decreased. 
+    Stores the individual balance in the db. Notifies if the balance decreased.
     Also sends end of day notification with today's/this weeks balance increase & APR."""
     timestamp = datetime.datetime.now()
     total_balance = 0
@@ -158,16 +159,53 @@ def check_balance_and_record(data):
         # since function runs after midnight, substract +1 day
         d_increase, d_APR = get_increase_and_APR(1, total_balance)
         w_increase, w_APR = get_increase_and_APR(8, total_balance)
+
+        eth_price = get_eth_price()
+        amount = total_balance / 1e9
+        shares = breakdown_to_shares(amount)
+        shares_txt = "".join(
+            [
+                k
+                + ": "
+                + str(round(v, 4))
+                + " ~= $"
+                + "{:,.2f}".format(round(v * eth_price, 2))
+                + "\n"
+                for k, v in shares.items()
+            ]
+        )
         message = (
-            f"Today's balance increase: {d_increase}\n"
-            f"Weekly balance increase:  {w_increase}\n\n"
+            f"*ETH Balances*\n"
+            f"{shares_txt}\n\n"
+            f"Total: {round(amount, 4)} ETH\n"
+            # f"Today's balance increase: {d_increase}\n"
+            # f"Weekly balance increase:  {w_increase}\n\n"
             f"APR (based on last 24h): {d_APR}\n"
             f"APR (based on last 7d):  {w_APR}"
         )
         send_message(message)
 
 
+def get_eth_price():
+    client = cbpro.PublicClient()
+    response = client.get_product_ticker(product_id="ETH-USD")
+    return float(response["price"])
+
+
+def breakdown_to_shares(amount):
+    return {
+        "Vyas": amount * 2 / 32,
+        "Kevin": amount * 4.1 / 32,
+        "Crystal": amount * 4 / 32,
+        "Brent": amount * 0.59185122 / 32,
+        "Neil": amount * 1.20757364 / 32,
+        "Arthur": amount * 4.1 / 32,
+        "Taylor": amount * 16 / 32,
+    }
+
+
 def main():
+    print("running")
     try:
         data = get_data()
         check_balance_and_record(data)
