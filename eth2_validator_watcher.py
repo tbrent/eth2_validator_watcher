@@ -181,7 +181,8 @@ def check_balance_and_record(data):
             # f"Today's balance increase: {d_increase}\n"
             # f"Weekly balance increase:  {w_increase}\n\n"
             f"APR (based on last 24h): {d_APR}\n"
-            f"APR (based on last 7d):  {w_APR}"
+            f"APR (based on last 7d):  {w_APR}\n\n"
+            "ETH Price: *$" + "{:,.2f}".format(eth_price) + "*"
         )
         send_message(message)
 
